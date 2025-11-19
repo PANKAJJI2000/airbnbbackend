@@ -1,7 +1,7 @@
 {
-  "name": "airbnb-project",
+  "name": "airbnb-admin",
   "version": "1.0.0",
-  "description": "Airbnb clone project",
+  "proxy": "https://airbnbbackend-sage.vercel.app",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",

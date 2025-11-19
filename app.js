@@ -47,7 +47,7 @@ app.use(express.static(path.join(__dirname,"/public")));
 
 // Enable CORS for React admin panel - BEFORE routes
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-admin-panel-url.vercel.app'],
+  origin: ['http://localhost:3000', 'https://airbnbui-fxxu.onrender.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
