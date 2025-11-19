@@ -1,0 +1,206 @@
+<% layout("/layouts/boilerplate") %>
+
+<div class="row mt-3">
+  <div class="col-8 offset-2">
+    <h3>Booking Details</h3>
+    
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Booking #<%= booking._id.toString().slice(-8) %></h5>
+        <div>
+          <span class="badge 
+            <% if(booking.status === 'confirmed') { %>bg-success<% } %>
+            <% if(booking.status === 'pending') { %>bg-warning<% } %>
+            <% if(booking.status === 'cancelled') { %>bg-danger<% } %>
+            <% if(booking.status === 'completed') { %>bg-info<% } %>
+          ">
+            <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+          </span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <!-- Listing Information -->
+        <% if(booking.listing) { %>
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <% if(booking.listing.image) { %>
+                <img src="<%= booking.listing.image.url %>" class="img-fluid rounded" alt="<%= booking.listing.title %>" style="width: 100%; height: 200px; object-fit: cover;">
+              <% } %>
+            </div>
+            <div class="col-md-8">
+              <h4><%= booking.listing.title %></h4>
+              <p class="text-muted"><%= booking.listing.location %>, <%= booking.listing.country %></p>
+              <p><%= booking.listing.description %></p>
+              <p><strong>Price per night:</strong> ₹<%= booking.listing.price.toLocaleString("en-IN") %></p>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="alert alert-warning">
+            <strong>Notice:</strong> The original listing is no longer available.
+          </div>
+        <% } %>
+        
+        <hr>
+        
+        <!-- Booking Details -->
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Booking Information</h5>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>Check-in Date:</strong></td>
+                <td><%= booking.checkIn.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></td>
+              </tr>
+              <tr>
+                <td><strong>Check-out Date:</strong></td>
+                <td><%= booking.checkOut.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></td>
+              </tr>
+              <tr>
+                <td><strong>Duration:</strong></td>
+                <td><%= booking.duration %> night<%= booking.duration > 1 ? 's' : '' %></td>
+              </tr>
+              <tr>
+                <td><strong>Number of Guests:</strong></td>
+                <td><%= booking.guests %></td>
+              </tr>
+              <tr>
+                <td><strong>Total Price:</strong></td>
+                <td><strong>₹<%= booking.totalPrice.toLocaleString("en-IN") %></strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="col-md-6">
+            <h5>Contact & Status</h5>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>Guest Name:</strong></td>
+                <td><%= booking.user.username %></td>
+              </tr>
+              <tr>
+                <td><strong>Phone Number:</strong></td>
+                <td><%= booking.phoneNumber %></td>
+              </tr>
+              <tr>
+                <td><strong>Booking Status:</strong></td>
+                <td>
+                  <span class="badge 
+                    <% if(booking.status === 'confirmed') { %>bg-success<% } %>
+                    <% if(booking.status === 'pending') { %>bg-warning<% } %>
+                    <% if(booking.status === 'cancelled') { %>bg-danger<% } %>
+                    <% if(booking.status === 'completed') { %>bg-info<% } %>
+                  ">
+                    <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Payment Status:</strong></td>
+                <td>
+                  <span class="badge 
+                    <% if(booking.paymentStatus === 'paid') { %>bg-success<% } %>
+                    <% if(booking.paymentStatus === 'pending') { %>bg-warning<% } %>
+                    <% if(booking.paymentStatus === 'refunded') { %>bg-secondary<% } %>
+                  ">
+                    <%= booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1) %>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Booked On:</strong></td>
+                <td><%= booking.createdAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Special Requests -->
+        <% if(booking.specialRequests && booking.specialRequests.trim() !== '') { %>
+          <hr>
+          <div class="row">
+            <div class="col-12">
+              <h5>Special Requests</h5>
+              <div class="card bg-light">
+                <div class="card-body">
+                  <p class="mb-0"><%= booking.specialRequests %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% } %>
+        
+        <hr>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/bookings" class="btn btn-secondary">← Back to Bookings</a>
+          
+          <!-- For booking owner -->
+          <% if(booking.user._id.equals(currUser._id)) { %>
+            <% if(booking.status === 'pending' || booking.status === 'confirmed') { %>
+              <form action="/bookings/<%= booking._id %>/cancel?_method=PATCH" method="POST" class="d-inline" 
+                    onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                <button type="submit" class="btn btn-outline-danger">Cancel Booking</button>
+              </form>
+            <% } %>
+          <% } %>
+          
+          <!-- For listing owner -->
+          <% if(booking.listing && booking.listing.owner.equals(currUser._id)) { %>
+            <% if(booking.status === 'pending') { %>
+              <form action="/bookings/<%= booking._id %>/status?_method=PATCH" method="POST" class="d-inline">
+                <input type="hidden" name="status" value="confirmed">
+                <button type="submit" class="btn btn-success">Confirm Booking</button>
+              </form>
+              <form action="/bookings/<%= booking._id %>/status?_method=PATCH" method="POST" class="d-inline">
+                <input type="hidden" name="status" value="cancelled">
+                <button type="submit" class="btn btn-outline-danger" 
+                        onclick="return confirm('Are you sure you want to reject this booking?')">Reject Booking</button>
+              </form>
+            <% } else if(booking.status === 'confirmed') { %>
+              <form action="/bookings/<%= booking._id %>/status?_method=PATCH" method="POST" class="d-inline">
+                <input type="hidden" name="status" value="completed">
+                <button type="submit" class="btn btn-info">Mark as Completed</button>
+              </form>
+            <% } %>
+          <% } %>
+          
+          <% if(booking.listing) { %>
+            <a href="/listings/<%= booking.listing._id %>" class="btn btn-outline-primary">View Listing</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .table td {
+    border: none;
+    padding: 0.5rem 0;
+  }
+  
+  .table td:first-child {
+    width: 40%;
+  }
+  
+  .card-header h5 {
+    color: #495057;
+  }
+  
+  .gap-2 {
+    gap: 0.5rem !important;
+  }
+  
+  @media (max-width: 768px) {
+    .d-flex.gap-2 {
+      flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn,
+    .d-flex.gap-2 .d-inline {
+      width: 100%;
+    }
+  }
+</style>

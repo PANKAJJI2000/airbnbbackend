@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: airbnb-node
+    runtime: node
+    env: node
+    region: oregon
+    rootDir: airbnb
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18

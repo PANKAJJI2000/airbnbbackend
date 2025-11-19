@@ -1,0 +1,111 @@
+<% layout("/layouts/boilerplate") %>
+
+<div class="row mt-3">
+  <div class="col-10 offset-1">
+    <h3>My Bookings</h3>
+    
+    <% if(bookings && bookings.length > 0) { %>
+      <div class="row">
+        <% for(let booking of bookings) { %>
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <% if(booking.listing && booking.listing.image) { %>
+                <img src="<%= booking.listing.image.url %>" class="card-img-top" alt="<%= booking.listing.title %>" style="height: 200px; object-fit: cover;">
+              <% } %>
+              <div class="card-body">
+                <h5 class="card-title">
+                  <% if(booking.listing) { %>
+                    <%= booking.listing.title %>
+                  <% } else { %>
+                    Listing No Longer Available
+                  <% } %>
+                </h5>
+                
+                <div class="booking-details">
+                  <p class="card-text">
+                    <strong>Check-in:</strong> <%= booking.checkIn.toLocaleDateString() %><br>
+                    <strong>Check-out:</strong> <%= booking.checkOut.toLocaleDateString() %><br>
+                    <strong>Guests:</strong> <%= booking.guests %><br>
+                    <strong>Duration:</strong> <%= booking.duration %> night<%= booking.duration > 1 ? 's' : '' %>
+                  </p>
+                  
+                  <p class="card-text">
+                    <strong>Total Price:</strong> ₹<%= booking.totalPrice.toLocaleString("en-IN") %>
+                  </p>
+                  
+                  <p class="card-text">
+                    <span class="badge 
+                      <% if(booking.status === 'confirmed') { %>bg-success<% } %>
+                      <% if(booking.status === 'pending') { %>bg-warning<% } %>
+                      <% if(booking.status === 'cancelled') { %>bg-danger<% } %>
+                      <% if(booking.status === 'completed') { %>bg-info<% } %>
+                    ">
+                      <%= booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Pending' %>
+                    </span>
+                    
+                    <% if(booking.paymentStatus) { %>
+                      <span class="badge 
+                        <% if(booking.paymentStatus === 'paid') { %>bg-success<% } %>
+                        <% if(booking.paymentStatus === 'pending') { %>bg-warning<% } %>
+                        <% if(booking.paymentStatus === 'refunded') { %>bg-secondary<% } %>
+                        ms-2">
+                        Payment: <%= booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1) %>
+                      </span>
+                    <% } %>
+                  </p>
+                  
+                  <p class="card-text">
+                    <small class="text-muted">Booked on <%= booking.createdAt.toLocaleDateString() %></small>
+                  </p>
+                </div>
+                
+                <div class="booking-actions">
+                  <a href="/bookings/<%= booking._id %>" class="btn btn-primary btn-sm">View Details</a>
+                  
+                  <% if(booking.status === 'pending' || booking.status === 'confirmed') { %>
+                    <form action="/bookings/<%= booking._id %>/cancel?_method=PATCH" method="POST" class="d-inline" 
+                          onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                      <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                    </form>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="text-center mt-5">
+        <div class="col-6 offset-3">
+          <img src="https://via.placeholder.com/300x200/f8f9fa/6c757d?text=No+Bookings" class="img-fluid mb-3" alt="No bookings">
+          <h4>No Bookings Yet</h4>
+          <p class="text-muted">You haven't made any bookings yet. Start exploring amazing places to stay!</p>
+          <a href="/listings" class="btn btn-primary">Browse Listings</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+  .booking-details p {
+    margin-bottom: 0.5rem;
+  }
+  
+  .booking-actions {
+    margin-top: 1rem;
+  }
+  
+  .booking-actions .btn {
+    margin-right: 0.5rem;
+  }
+  
+  .card {
+    transition: transform 0.2s;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+</style>

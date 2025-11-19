@@ -1,0 +1,189 @@
+<% layout("/layouts/boilerplate") %>
+<div class="row mt-2">
+    <div class="col-8 offset-3">
+    <h3><%= listing.title %></h3>
+    </div>
+    <div class="card col-6 offset-3 show-card listing-card">
+            <img src="<%= listing.image.url %>" class="card-img-top show-img" alt="listing_image">
+            <div class="card-body">
+              <p class="card-text"> Owned By : <i><%= listing.owner.username  %></i></p>
+              <p class="card-text"> <%= listing.description %></p>
+              <p class="card-text"> &#8377;<%= listing.price.toLocaleString("en-IN") %></p>
+              <p class="card-text"> <%= listing.location %></p>
+              <p class="card-text"><%= listing.country %></p>
+            </div>
+          </div>
+
+                    </div>
+
+          <%- include("book-button") %>
+
+          <% if (typeof currUser !== 'undefined' && currUser && currUser._id && listing && listing.owner && listing.owner._id && String(currUser._id) === String(listing.owner._id)) { %>
+      <div class="btns offset-1 mb-10">
+        <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1 offset-2 edit-btn">Edit</a>        
+        <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
+            <button class="btn btn-dark offset-4">Delete</button>
+        </form>
+    </div>
+      <% } %>
+
+    <div class="col-8 offset-3">
+      <% if (typeof currUser !== 'undefined' && currUser) { %>
+        <hr />
+      <h4>Leave a Review</h4>
+      <form action="/listings/<%= listing.id %>/reviews" method="POST" novalidate class="needs-validation mb-3">
+        <div class="mb-3 mt-3">
+          <label for="rating" class="form-label">Rating</label>
+        <fieldset class="starability-slot">
+          <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="0" checked aria-label="No rating." />
+          <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+          <label for="first-rate1" title="Terrible">1 star</label>
+          <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+          <label for="first-rate2" title="Not good">2 stars</label>
+          <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+          <label for="first-rate3" title="Average">3 stars</label>
+          <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+          <label for="first-rate4" title="Very good">4 stars</label>
+          <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+          <label for="first-rate5" title="Amazing">5 stars</label>
+        </fieldset>
+      </div>
+        <div class="mb-3 mt-3">
+          <label for="comment" class="form-label">Comments</label>
+          <textarea name="review[comment]" id="comment" cols="30" rows="5" class="form-control" required></textarea>
+        </div>
+        <button class="btn btn-outline-dark">Submit</button>
+      </form>
+      <% } %>
+      <hr />
+      <% if(listing.reviews.length > 0) { %>
+      <div class="row">
+        <p><b>All Review </b> </p>
+      <% for(review of listing.reviews){%>
+        <div class="card col-5 mb-3 ms-3">
+          <div class="card-body">
+            <h5 class="card-title">@<%= review.author.username %></h5>
+            <p class="card-text"><%= review.comment %></p> 
+            <p class="starability-result card-text" data-rating="<%= review.rating %>">
+            </p>                  
+          </div>
+          <form class="mb-3" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST">
+            <button class="btn btn-sm btn-dark">Delete</button>
+          </form>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+    
+    <% if(typeof mapplsClientId !== 'undefined' && mapplsClientId) { %>
+    <div class="col-6 offset-3 mb-3">
+      <h3>Where You'll be</h3>
+      <div id="map"></div>
+    </div>
+    <% } else { %>
+    <div class="col-6 offset-3 mb-3">
+      <h3>Location</h3>
+      <p><%= listing.location %>, <%= listing.country %></p>
+    </div>
+    <% } %>
+</div>
+
+<% if(typeof mapplsClientId !== 'undefined' && mapplsClientId) { %>
+<script>
+  (function() {
+    'use strict';
+    
+    let mapInitialized = false;
+    let initAttempts = 0;
+    const maxAttempts = 20;
+    
+    function initMap() {
+      if (mapInitialized) return;
+      
+      // Check if mappls object is available
+      if (typeof mappls === 'undefined') {
+        initAttempts++;
+        if (initAttempts < maxAttempts) {
+          setTimeout(initMap, 200);
+          return;
+        } else {
+          console.error('MapmyIndia SDK failed to load');
+          showMapError('Map SDK failed to load. Please refresh the page.');
+          return;
+        }
+      }
+      
+      mapInitialized = true;
+      
+      try {
+        const coordinates = JSON.parse('<%- JSON.stringify(listing.geometry ? listing.geometry.coordinates : null) %>');
+        
+        if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
+          throw new Error("Invalid coordinates for this listing");
+        }
+
+        const lng = parseFloat(coordinates[0]);
+        const lat = parseFloat(coordinates[1]);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          throw new Error("Invalid coordinate values");
+        }
+
+        // Initialize MapmyIndia Map
+        const map = new mappls.Map('map', {
+          center: [lat, lng],
+          zoom: 13,
+          zoomControl: true,
+          fullscreenControl: true,
+          location: false
+        });
+
+        // Wait for map to load before adding marker
+        map.on('load', function() {
+          // Add marker for the listing location
+          const marker = new mappls.Marker({
+            map: map,
+            position: {
+              lat: lat,
+              lng: lng
+            },
+            fitbounds: true,
+            icon: mappls.marker_icon ? mappls.marker_icon.RED : undefined,
+            popupHtml: '<div style="padding: 10px; min-width: 150px;"><strong><%= listing.title %></strong><br/><%= listing.location %></div>',
+            draggable: false
+          });
+
+          // Open popup after marker is added
+          setTimeout(function() {
+            if (marker && typeof marker.openPopup === 'function') {
+              marker.openPopup();
+            }
+          }, 800);
+        });
+
+      } catch (error) {
+        console.error('Map initialization error:', error);
+        showMapError(error.message || 'Map functionality is currently unavailable.');
+      }
+    }
+    
+    function showMapError(message) {
+      const mapElement = document.getElementById('map');
+      if (mapElement) {
+        mapElement.innerHTML = '<div style="padding: 20px; text-align: center; color: #666; background: #f9f9f9; border-radius: 8px;">' +
+          '<p><strong>⚠ ' + message + '</strong></p>' +
+          '<p style="font-size: 0.9em; margin-top: 10px;">Location: <%= listing.location %>, <%= listing.country %></p>' +
+          '</div>';
+      }
+    }
+
+    // Initialize map when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMap);
+    } else {
+      setTimeout(initMap, 100);
+    }
+  })();
+</script>
+<% } %>

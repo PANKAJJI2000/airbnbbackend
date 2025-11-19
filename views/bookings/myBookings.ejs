@@ -1,0 +1,182 @@
+<% layout("/layouts/boilerplate") %>
+
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">My Bookings</h1>
+      
+      <% if (bookings && bookings.length > 0) { %>
+        <div class="row">
+          <% bookings.forEach(booking => { %>
+            <div class="col-md-12 mb-4">
+              <div class="card shadow-sm">
+                <div class="row g-0">
+                  <div class="col-md-4">
+                    <% if (booking.listing.image && booking.listing.image.url) { %>
+                      <img src="<%= booking.listing.image.url %>" class="img-fluid rounded-start booking-image" alt="<%= booking.listing.title %>">
+                    <% } else { %>
+                      <img src="https://via.placeholder.com/300x200" class="img-fluid rounded-start booking-image" alt="Listing">
+                    <% } %>
+                  </div>
+                  <div class="col-md-8">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title"><%= booking.listing.title %></h5>
+                        <span class="badge <%= booking.status === 'confirmed' ? 'bg-success' : booking.status === 'pending' ? 'bg-warning' : 'bg-secondary' %>">
+                          <%= booking.status ? booking.status.toUpperCase() : 'PENDING' %>
+                        </span>
+                      </div>
+                      
+                      <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt"></i> <%= booking.listing.location %>
+                      </p>
+                      
+                      <div class="row mt-3">
+                        <div class="col-md-6">
+                          <p class="mb-2"><strong>Check-in:</strong> <%= new Date(booking.checkIn).toLocaleDateString() %></p>
+                          <p class="mb-2"><strong>Check-out:</strong> <%= new Date(booking.checkOut).toLocaleDateString() %></p>
+                          <p class="mb-2"><strong>Guests:</strong> <%= booking.guests || 1 %></p>
+                        </div>
+                        <div class="col-md-6">
+                          <p class="mb-2"><strong>Total Price:</strong> <span class="text-success fw-bold">$<%= booking.totalPrice %></span></p>
+                          <p class="mb-2"><strong>Booking Date:</strong> <%= new Date(booking.createdAt).toLocaleDateString() %></p>
+                          <p class="mb-2">
+                            <strong>Payment Method:</strong> 
+                            <span class="badge bg-info"><%= booking.paymentMethod || 'Not Set' %></span>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div class="mt-3 d-flex gap-2">
+                        <a href="/listings/<%= booking.listing._id %>" class="btn btn-outline-primary btn-sm">
+                          <i class="fas fa-eye"></i> View Listing
+                        </a>
+                        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#paymentModal<%= booking._id %>">
+                          <i class="fas fa-credit-card"></i> Update Payment
+                        </button>
+                        <% if (booking.status === 'pending') { %>
+                          <form action="/bookings/<%= booking._id %>?_method=DELETE" method="POST" class="d-inline">
+                            <button class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                              <i class="fas fa-times"></i> Cancel Booking
+                            </button>
+                          </form>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Method Update Modal -->
+            <div class="modal fade" id="paymentModal<%= booking._id %>" tabindex="-1" aria-labelledby="paymentModalLabel<%= booking._id %>" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel<%= booking._id %>">Update Payment Method</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <form action="/bookings/<%= booking._id %>/payment?_method=PUT" method="POST">
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Select Payment Method</label>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard<%= booking._id %>" value="Credit Card" <%= booking.paymentMethod === 'Credit Card' ? 'checked' : '' %> required>
+                          <label class="form-check-label" for="creditCard<%= booking._id %>">
+                            <i class="fas fa-credit-card"></i> Credit Card
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="debitCard<%= booking._id %>" value="Debit Card" <%= booking.paymentMethod === 'Debit Card' ? 'checked' : '' %>>
+                          <label class="form-check-label" for="debitCard<%= booking._id %>">
+                            <i class="fas fa-credit-card"></i> Debit Card
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="paypal<%= booking._id %>" value="PayPal" <%= booking.paymentMethod === 'PayPal' ? 'checked' : '' %>>
+                          <label class="form-check-label" for="paypal<%= booking._id %>">
+                            <i class="fab fa-paypal"></i> PayPal
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="bankTransfer<%= booking._id %>" value="Bank Transfer" <%= booking.paymentMethod === 'Bank Transfer' ? 'checked' : '' %>>
+                          <label class="form-check-label" for="bankTransfer<%= booking._id %>">
+                            <i class="fas fa-university"></i> Bank Transfer
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="cash<%= booking._id %>" value="Cash" <%= booking.paymentMethod === 'Cash' ? 'checked' : '' %>>
+                          <label class="form-check-label" for="cash<%= booking._id %>">
+                            <i class="fas fa-money-bill-wave"></i> Cash
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i> Your payment method will be updated immediately.
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Update Payment Method</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="alert alert-info text-center" role="alert">
+          <i class="fas fa-info-circle fa-3x mb-3"></i>
+          <h4>No Bookings Yet</h4>
+          <p>You haven't made any bookings yet. Start exploring amazing places!</p>
+          <a href="/listings" class="btn btn-primary mt-2">Browse Listings</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .booking-image {
+    height: 100%;
+    object-fit: cover;
+    min-height: 250px;
+  }
+  
+  .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+  }
+  
+  .btn-sm {
+    font-size: 0.875rem;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.75em;
+  }
+  
+  .form-check {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s;
+  }
+  
+  .form-check:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .form-check-input:checked + .form-check-label {
+    font-weight: 600;
+    color: #0d6efd;
+  }
+</style>
